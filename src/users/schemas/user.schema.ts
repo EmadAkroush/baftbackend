@@ -1,20 +1,8 @@
-// src/modules/users/schemas/user.schema.ts
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document } from 'mongoose';
+import * as mongoose from 'mongoose';
 
-import {
-  Prop,
-  Schema,
-  SchemaFactory,
-} from '@nestjs/mongoose';
-
-import { HydratedDocument } from 'mongoose';
-
-export type UserDocument =
-  HydratedDocument<User>;
-
-export enum UserRole {
-  USER = 'USER',
-  ADMIN = 'ADMIN',
-}
+export type UserDocument = User & Document;
 
 export enum UserLevel {
   STARTER = 'STARTER',
@@ -22,20 +10,21 @@ export enum UserLevel {
   LEADER = 'LEADER',
 }
 
+export enum UserRole {
+  USER = 'USER',
+  ADMIN = 'ADMIN',
+}
+
 @Schema({
   timestamps: true,
 })
 export class User {
-  @Prop({
-    required: true,
-    trim: true,
-  })
+  // ===== Profile =====
+
+  @Prop({ required: true })
   name!: string;
 
-  @Prop({
-    required: true,
-    trim: true,
-  })
+  @Prop({ required: true })
   family!: string;
 
   @Prop({
@@ -46,30 +35,10 @@ export class User {
   phone!: string;
 
   @Prop({
-    enum: UserLevel,
-    default: UserLevel.STARTER,
-  })
-  level!: UserLevel;
-
-  @Prop({
-    default: 0,
-  })
-  reward!: number;
-
-  @Prop({
     unique: true,
-    required: true,
-    index: true,
+    sparse: true,
   })
-  referralCode!: string;
-
-  @Prop({
-    default: null,
-  })
-  referredBy!: string;
-
-  @Prop()
-  zipcode!: string;
+  nationalCode!: string;
 
   @Prop()
   province!: string;
@@ -77,29 +46,58 @@ export class User {
   @Prop()
   city!: string;
 
-  @Prop({
-    default: false,
-  })
-  active!: boolean;
+  @Prop()
+  zipcode!: string;
 
-  @Prop({
-    type: [String],
-    default: [],
-  })
-  shaba!: string[];
+  @Prop()
+  avatar!: string;
+
+  @Prop()
+  idCard!: string;
+
+  // ===== Authentication =====
+
+  @Prop()
+  password!: string;
+
+  @Prop()
+  otp!: string;
+
+  @Prop()
+  refreshToken!: string;
+
+  @Prop()
+  verificationToken!: string;
 
   @Prop({
     default: false,
   })
   authentication!: boolean;
 
-  @Prop()
-  idCard!: string;
+  @Prop({
+    default: false,
+  })
+  isVerified!: boolean;
+
+  // ===== Referral =====
 
   @Prop({
-    default: 0,
+    required: true,
+    unique: true,
+    index: true,
   })
-  orders!: number;
+  referralCode!: string;
+
+  @Prop()
+  referredBy!: string;
+
+  @Prop({
+    type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    default: [],
+  })
+  referrals!: mongoose.Types.ObjectId[];
+
+  // ===== MLM Position =====
 
   @Prop({
     default: 0,
@@ -116,11 +114,30 @@ export class User {
   })
   teamOrders!: number;
 
-  @Prop()
-  otp!: string;
+  @Prop({
+    default: 0,
+  })
+  orders!: number;
 
-  @Prop()
-  avatar!: string;
+  @Prop({
+    default: 0,
+  })
+  pairCycle!: number;
+
+  // ===== Level =====
+
+  @Prop({
+    enum: UserLevel,
+    default: UserLevel.STARTER,
+  })
+  level!: UserLevel;
+
+  @Prop({
+    default: 0,
+  })
+  reward!: number;
+
+  // ===== Wallet =====
 
   @Prop({
     default: 0,
@@ -135,17 +152,12 @@ export class User {
   @Prop({
     default: 0,
   })
-  withdrawalTotalBalance!: number;
-
-  @Prop({
-    default: 0,
-  })
-  pairCycle!: number;
-
-  @Prop({
-    default: 0,
-  })
   maxCapBalanceWeek!: number;
+
+  @Prop({
+    default: 0,
+  })
+  withdrawalTotalBalance!: number;
 
   @Prop({
     default: 0,
@@ -167,11 +179,20 @@ export class User {
   })
   totalBalance!: number;
 
-  @Prop()
-  refreshToken!: string;
+  // ===== Bank =====
 
-  @Prop()
-  verificationToken!: string;
+  @Prop({
+    type: [String],
+    default: [],
+  })
+  shaba!: string[];
+
+  // ===== Status =====
+
+  @Prop({
+    default: true,
+  })
+  active!: boolean;
 
   @Prop({
     enum: UserRole,
@@ -179,9 +200,10 @@ export class User {
   })
   role!: UserRole;
 
-  @Prop()
+  @Prop({
+    default: Date.now,
+  })
   lastLogin!: Date;
 }
 
-export const UserSchema =
-  SchemaFactory.createForClass(User);
+export const UserSchema = SchemaFactory.createForClass(User);

@@ -1,139 +1,58 @@
 // src/modules/users/dto/create-user.dto.ts
 
 import {
-  IsBoolean,
-  IsEnum,
-  IsNumber,
+  IsString,
   IsOptional,
   IsPhoneNumber,
-  IsString,
-  IsArray,
+  MinLength,
 } from 'class-validator';
-
-import { UserLevel, UserRole } from '../entities/user.entity';
 
 export class CreateUserDto {
   @IsString()
-  name!: string;
+  name?: string;
 
   @IsString()
-  family!: string;
+  family?: string;
 
   @IsPhoneNumber('IR')
-  phone!: string;
-
-  @IsOptional()
-  @IsEnum(UserLevel)
-  level!: UserLevel;
-
-  @IsOptional()
-  @IsNumber()
-  reward!: number;
+  phone?: string;
 
   @IsString()
-  referralCode!: string;
+  @MinLength(6)
+  password?: string;
 
   @IsOptional()
   @IsString()
-  referredBy!: string;
+  referralCode?: string;
 
   @IsOptional()
   @IsString()
-  zipcode!: string;
+  referredBy?: string;
 
   @IsOptional()
   @IsString()
-  province!: string;
+  nationalCode?: string;
 
   @IsOptional()
   @IsString()
-  city!: string;
-
-  @IsOptional()
-  @IsBoolean()
-  active!: boolean;
-
-  @IsOptional()
-  @IsArray()
-  shaba!: string[];
-
-  @IsOptional()
-  @IsBoolean()
-  authentication!: boolean;
+  province?: string;
 
   @IsOptional()
   @IsString()
-  idCard!: string;
-
-  @IsOptional()
-  @IsNumber()
-  orders!: number;
-
-  @IsOptional()
-  @IsNumber()
-  leftHand!: number;
-
-  @IsOptional()
-  @IsNumber()
-  rightHand!: number;
-
-  @IsOptional()
-  @IsNumber()
-  teamOrders!: number;
+  city?: string;
 
   @IsOptional()
   @IsString()
-  otp!: string;
+  zipcode?: string;
 
   @IsOptional()
   @IsString()
-  avatar!: string;
-
-  @IsOptional()
-  @IsNumber()
-  mainBalance!: number;
-
-  @IsOptional()
-  @IsNumber()
-  maxCapBalance!: number;
-
-  @IsOptional()
-  @IsNumber()
-  withdrawalTotalBalance!: number;
-
-  @IsOptional()
-  @IsNumber()
-  pairCycle!: number;
-
-  @IsOptional()
-  @IsNumber()
-  maxCapBalanceWeek!: number;
-
-  @IsOptional()
-  @IsNumber()
-  referralBalance!: number;
-
-  @IsOptional()
-  @IsNumber()
-  bonusBalance!: number;
-
-  @IsOptional()
-  @IsNumber()
-  totalIncome!: number;
-
-  @IsOptional()
-  @IsNumber()
-  totalBalance!: number;
+  avatar?: string;
 
   @IsOptional()
   @IsString()
-  refreshToken!: string;
+  idCard?: string;
 
   @IsOptional()
-  @IsString()
-  verificationToken!: string;
-
-  @IsOptional()
-  @IsEnum(UserRole)
-  role!: UserRole;
+  shaba?: string[];
 }

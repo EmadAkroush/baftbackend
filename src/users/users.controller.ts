@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Put,
 } from '@nestjs/common';
 
 import { UsersService } from './users.service';
@@ -22,8 +23,12 @@ export class UsersController {
     private readonly usersService: UsersService,
   ) {}
 
+  // =========================
+  // CREATE USER
+  // =========================
+
   @Post()
-  create(
+  async create(
     @Body() createUserDto: CreateUserDto,
   ) {
     return this.usersService.create(
@@ -31,29 +36,83 @@ export class UsersController {
     );
   }
 
+  // =========================
+  // GET ALL USERS
+  // =========================
+
   @Get()
-  findAll() {
+  async findAll() {
     return this.usersService.findAll();
   }
 
+  // =========================
+  // GET USER BY ID
+  // =========================
+
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.usersService.findOne(id);
+  async findById(
+    @Param('id') id: string,
+  ) {
+    return this.usersService.findById(id);
   }
 
+  // =========================
+  // UPDATE USER
+  // =========================
+
   @Patch(':id')
-  update(
+  async updateUser(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
   ) {
-    return this.usersService.update(
+    return this.usersService.updateUser(
       id,
       updateUserDto,
     );
   }
 
+  // =========================
+  // USER BALANCES
+  // =========================
+
+  @Get(':id/balances')
+  async getUserBalances(
+    @Param('id') id: string,
+  ) {
+    return this.usersService.getUserBalances(
+      id,
+    );
+  }
+
+  // =========================
+  // CHANGE PASSWORD
+  // =========================
+
+  @Put(':id/password')
+  async updatePassword(
+    @Param('id') id: string,
+
+    @Body()
+    body: {
+      newPassword: string;
+      confirmPassword: string;
+    },
+  ) {
+    return this.usersService.updatePassword(
+      id,
+      body.newPassword,
+      body.confirmPassword,
+    );
+  }
+
+  // =========================
+  // DELETE USER
+  // =========================
+
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(id);
+  async deleteUser(
+    @Param('id') id: string,
+  ) {
+    return this.usersService.deleteUser(id);
   }
 }
