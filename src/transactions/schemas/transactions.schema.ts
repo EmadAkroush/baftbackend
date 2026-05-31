@@ -28,8 +28,7 @@ export class Transaction extends Document {
   @Prop({ default: null })
   note?: string; // توضیحات اضافی
 
-  @Prop({ default: null })
-  txHash?: string; // هش تراکنش (اگر بلاک‌چینی باشد)
+
 }
 
 export const TransactionSchema = SchemaFactory.createForClass(Transaction);

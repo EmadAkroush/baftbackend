@@ -1,500 +1,313 @@
-import {
-  Injectable,
-  BadRequestException,
-  NotFoundException,
-} from '@nestjs/common';
-
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-
 import { Model } from 'mongoose';
-
-import {
-  Transaction,
-  TransactionStatus,
-  TransactionType,
-} from './schemas/transactions.schema';
-
+import { Transaction } from './schemas/transactions.schema';
 import { User } from '../users/schemas/user.schema';
-
 import mongoose from 'mongoose';
 
 @Injectable()
 export class TransactionsService {
   constructor(
-    @InjectModel(Transaction.name)
-    private readonly transactionModel: Model<Transaction>,
-
-    @InjectModel(User.name)
-    private readonly userModel: Model<User>,
+    @InjectModel(Transaction.name) private transactionModel: Model<Transaction>,
+    @InjectModel(User.name) private userModel: Model<User>,
   ) {}
 
-  // =====================================
-  // CREATE GENERIC TRANSACTION
-  // =====================================
-
-  async createTransaction(data: Partial<Transaction>) {
-    const transaction =
-      new this.transactionModel(data);
-
-    return transaction.save();
+  async getAllByType(type: string) {
+    return this.transactionModel.find({
+      type,
+      status: 'finished',
+    });
   }
 
-  // =====================================
-  // ADMIN
-  // =====================================
-
+  // 🔥 دریافت لیست کامل تراکنش‌ها برای سوپر ادمین (بدون فیلتر + بدون پیجینیشن)
   async getAllTransactionsForAdmin() {
-    return this.transactionModel
+    return await this.transactionModel
       .find()
-      .populate(
-        'userId',
-        'name family phone referralCode',
-      )
-      .sort({ createdAt: -1 })
+      .populate({ path: 'userId', select: 'phone wallet' }) // فقط فیلدهای مهم یوزر
+      .sort({ createdAt: -1 }) // مرتب‌سازی بر اساس جدیدترین تراکنش
       .lean();
   }
 
-  // =====================================
-  // USER TRANSACTIONS
-  // =====================================
+  // 🔹 ایجاد تراکنش جدید
+  async createTransaction(data: {
+    userId: string;
+    type: string;
+    amount: number;
+    currency?: string;
+    status?: string;
+    paymentId?: string;
+    statusUrl?: string;
+    note?: string;
+  
+  }) {
+    const newTx = new this.transactionModel({
+      ...data,
+      currency: data.currency || 'TOMAN',
+      status: data.status || 'pending',
+    });
+    return await newTx.save();
+  }
 
-  async getUserTransactions(
-    userId: string,
-  ) {
-    return this.transactionModel
+  // 🔹 دریافت سرمایه‌گذاری‌های کاربر
+  async getUserInvestments(userId: string) {
+    return await this.transactionModel
       .find({
-        userId: new mongoose.Types.ObjectId(
-          userId,
-        ),
+        userId,
+        type: 'investment',
       })
       .sort({ createdAt: -1 })
       .lean();
   }
 
+  // 🔹 آپدیت وضعیت تراکنش بر اساس paymentId
+  async updateTransactionStatus(
+    paymentId: string,
+    status: string,
+    txHash?: string,
+  ) {
+    return await this.transactionModel.findOneAndUpdate(
+      { paymentId },
+      { status, txHash },
+      { new: true },
+    );
+  }
+  // 🔹 لیست تراکنش‌های کاربر (با لاگ برای دیباگ)
+  async getUserTransactions(userId: string) {
+    console.log(
+      `[TransactionsService] getUserTransactions called with userId=${userId}`,
+    );
+
+    try {
+      const objectId = new mongoose.Types.ObjectId(userId);
+
+      const filter: any = {
+        $or: [
+          { userId: objectId }, // رکوردهای جدید
+          { userId: userId }, // رکوردهای قدیمی که string هستند
+          { userId: { $eq: objectId } }, // رکوردهایی که به صورت ObjectId هستند
+          { userId: { $eq: userId } }, // رکوردهایی که به صورت string هستند
+        ],
+      };
+
+      console.log('[TransactionsService] final filter:', filter);
+
+      const txs = await this.transactionModel
+        .find(filter)
+        .sort({ createdAt: -1 })
+        .lean();
+
+      console.log(`[TransactionsService] found ${txs.length} transactions`);
+      return txs;
+    } catch (error) {
+      console.error('[TransactionsService] getUserTransactions error:', error);
+      throw error;
+    }
+  }
+
+  // 🔹 گرفتن جزئیات تراکنش خاص
   async getTransactionById(id: string) {
-    const transaction =
-      await this.transactionModel.findById(
-        id,
-      );
-
-    if (!transaction) {
-      throw new NotFoundException(
-        'Transaction not found',
-      );
-    }
-
-    return transaction;
+    return await this.transactionModel.findById(id);
   }
 
-  // =====================================
-  // PRODUCT PURCHASE
-  // =====================================
-
-  async createPurchaseTransaction(
-    userId: string,
-    amount: number,
-    orderId: string,
-  ) {
-    return this.transactionModel.create({
-      userId,
-
-      amount,
-
-      orderId,
-
-      type:
-        TransactionType.PRODUCT_PURCHASE,
-
-      status:
-        TransactionStatus.COMPLETED,
-    });
-  }
-
-  // =====================================
-  // REFERRAL BONUS
-  // =====================================
-
-  async createReferralBonus(
-    userId: string,
-    amount: number,
-    relatedUserId?: string,
-  ) {
-    const user =
-      await this.userModel.findById(userId);
-
-    if (!user)
-      throw new NotFoundException(
-        'User not found',
-      );
-
-    user.referralBalance += amount;
-
-    user.totalIncome += amount;
-
-    user.totalBalance += amount;
-
-    await user.save();
-
-    return this.transactionModel.create({
-      userId,
-
-      amount,
-
-      relatedUserId,
-
-      type:
-        TransactionType.REFERRAL_BONUS,
-
-      status:
-        TransactionStatus.COMPLETED,
-    });
-  }
-
-  // =====================================
-  // PAIR BONUS
-  // =====================================
-
-  async createPairBonus(
-    userId: string,
-    amount: number,
-    leftVolume: number,
-    rightVolume: number,
-    pairCycle: number,
-  ) {
-    const user =
-      await this.userModel.findById(userId);
-
-    if (!user)
-      throw new NotFoundException(
-        'User not found',
-      );
-
-    user.bonusBalance += amount;
-
-    user.totalIncome += amount;
-
-    user.totalBalance += amount;
-
-    await user.save();
-
-    return this.transactionModel.create({
-      userId,
-
-      amount,
-
-      leftVolume,
-
-      rightVolume,
-
-      pairCycle,
-
-      type:
-        TransactionType.PAIR_BONUS,
-
-      status:
-        TransactionStatus.COMPLETED,
-    });
-  }
-
-  // =====================================
-  // RANK BONUS
-  // =====================================
-
-  async createRankBonus(
-    userId: string,
-    amount: number,
-  ) {
-    const user =
-      await this.userModel.findById(userId);
-
-    if (!user)
-      throw new NotFoundException(
-        'User not found',
-      );
-
-    user.bonusBalance += amount;
-
-    user.totalIncome += amount;
-
-    user.totalBalance += amount;
-
-    await user.save();
-
-    return this.transactionModel.create({
-      userId,
-
-      amount,
-
-      type:
-        TransactionType.RANK_BONUS,
-
-      status:
-        TransactionStatus.COMPLETED,
-    });
-  }
-
-  // =====================================
-  // MANUAL BONUS
-  // =====================================
-
-  async createManualBonus(
-    userId: string,
-    amount: number,
-    note?: string,
-  ) {
-    return this.transactionModel.create({
-      userId,
-
-      amount,
-
-      note,
-
-      type:
-        TransactionType.MANUAL_BONUS,
-
-      status:
-        TransactionStatus.COMPLETED,
-    });
-  }
-
-  // =====================================
-  // WITHDRAW REQUEST
-  // =====================================
-
-  async requestWithdrawal(
-    userId: string,
-    amount: number,
-  ) {
+  // 🟥 برداشت از حساب (با 7٪ کارمزد)
+  async requestWithdrawal(userId: string, amount: number) {
     if (amount <= 0) {
-      throw new BadRequestException(
-        'Invalid amount',
-      );
+      throw new BadRequestException('Invalid withdrawal amount');
     }
 
-    const user =
-      await this.userModel.findById(userId);
-
+    const user = await this.userModel.findById(userId);
     if (!user) {
-      throw new NotFoundException(
-        'User not found',
-      );
+      throw new BadRequestException('User not found');
     }
 
     if (user.mainBalance < amount) {
+      throw new BadRequestException('Insufficient balance');
+    }
+
+    // 🚫 بررسی سقف مجاز برداشت (Max Cap)
+    const newTotalWithdrawal = user.withdrawalTotalBalance + amount;
+
+    if (newTotalWithdrawal > user.maxCapBalance) {
       throw new BadRequestException(
-        'Insufficient balance',
+        'Withdrawal amount exceeds maximum allowed withdrawal capacity',
       );
     }
 
-    return this.transactionModel.create({
-      userId,
+    // 💰 کم کردن مبلغ از موجودی اصلی
+    user.mainBalance -= amount;
 
-      amount,
-
-      type:
-        TransactionType.WITHDRAWAL,
-
-      status:
-        TransactionStatus.PENDING,
-    });
-  }
-
-  // =====================================
-  // APPROVE WITHDRAW
-  // =====================================
-
-  async approveWithdrawal(
-    transactionId: string,
-    adminId: string,
-  ) {
-    const transaction =
-      await this.transactionModel.findById(
-        transactionId,
-      );
-
-    if (!transaction) {
-      throw new NotFoundException(
-        'Transaction not found',
-      );
-    }
-
-    if (
-      transaction.status !==
-      TransactionStatus.PENDING
-    ) {
-      throw new BadRequestException(
-        'Transaction already processed',
-      );
-    }
-
-    const user =
-      await this.userModel.findById(
-        transaction.userId,
-      );
-
-    if (!user) {
-      throw new NotFoundException(
-        'User not found',
-      );
-    }
-
-    user.mainBalance -=
-      transaction.amount;
-
-    user.withdrawalTotalBalance +=
-      transaction.amount;
+    // 📊 ثبت مجموع برداشت‌ها
+    user.withdrawalTotalBalance = newTotalWithdrawal;
 
     await user.save();
 
-    transaction.status =
-      TransactionStatus.APPROVED;
+    // 💸 محاسبه مبلغ خالص بعد از 7٪ کارمزد
+    const netAmount = amount * 0.93;
 
-    transaction.approvedBy =
-      new mongoose.Types.ObjectId(
-        adminId,
-      );
+    // 📘 ثبت تراکنش برداشت
+    const tx = new this.transactionModel({
+      userId,
+      type: 'withdraw',
+      amount,
+      currency: 'TOMAN',
+      status: 'pending',
+      note: `Withdrawal request submitted. User will receive ${netAmount.toFixed(
+        2,
+      )} TOMAN after 7% fee.`,
+    });
 
-    transaction.approvedAt =
-      new Date();
-
-    await transaction.save();
-
-    return transaction;
+    return await tx.save();
   }
 
-  // =====================================
-  // REJECT WITHDRAW
-  // =====================================
-
-  async rejectWithdrawal(
-    transactionId: string,
-    adminId: string,
-  ) {
-    const transaction =
-      await this.transactionModel.findById(
-        transactionId,
-      );
-
-    if (!transaction) {
-      throw new NotFoundException(
-        'Transaction not found',
-      );
-    }
-
-    transaction.status =
-      TransactionStatus.REJECTED;
-
-    transaction.approvedBy =
-      new mongoose.Types.ObjectId(
-        adminId,
-      );
-
-    transaction.approvedAt =
-      new Date();
-
-    await transaction.save();
-
-    return transaction;
+  async findByTypeAndDate(type: string, since: Date) {
+    return await this.transactionModel.find({
+      type,
+      createdAt: { $gte: since },
+    });
   }
 
-  // =====================================
-  // FINANCIAL SUMMARY
-  // =====================================
-
-  async getUserFinancialSummary(
-    userId: string,
-  ) {
-    const user =
-      await this.userModel.findById(userId);
-
-    if (!user) {
-      throw new NotFoundException(
-        'User not found',
-      );
-    }
-
-    return {
-      mainBalance:
-        user.mainBalance,
-
-      maxCapBalance:
-        user.maxCapBalance,
-
-      referralBalance:
-        user.referralBalance,
-
-      bonusBalance:
-        user.bonusBalance,
-
-      totalIncome:
-        user.totalIncome,
-
-      totalBalance:
-        user.totalBalance,
-
-      withdrawalTotalBalance:
-        user.withdrawalTotalBalance,
-    };
+  async updateTransactionStatusAdmin(id: string, status: string) {
+    return await this.transactionModel.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true },
+    );
   }
 
-  // =====================================
-  // CHARTS
-  // =====================================
-
-  async getBonusChart() {
-    return this.transactionModel.aggregate([
-      {
-        $match: {
-          type: {
-            $in: [
-              TransactionType.REFERRAL_BONUS,
-              TransactionType.PAIR_BONUS,
-              TransactionType.RANK_BONUS,
-            ],
+  async getProfitChart(userId: string) {
+    return this.transactionModel
+      .aggregate([
+        {
+          $match: {
+            type: 'profit',
+            status: 'completed',
           },
         },
-      },
-      {
-        $group: {
-          _id: {
-            $month: '$createdAt',
-          },
-          total: {
-            $sum: '$amount',
+        {
+          $group: {
+            _id: { $month: '$createdAt' },
+            total: { $sum: '$amount' },
           },
         },
-      },
-      {
-        $sort: {
-          _id: 1,
+        { $sort: { _id: 1 } },
+        {
+          $project: {
+            _id: 0,
+            month: '$_id',
+            total: 1,
+          },
         },
-      },
-    ]);
+      ])
+      .then((rows) => ({
+        labels: rows.map((r) => this.monthName(r.month)),
+        data: rows.map((r) => r.total),
+      }));
   }
 
-  async getWithdrawalChart() {
-    return this.transactionModel.aggregate([
-      {
-        $match: {
-          type:
-            TransactionType.WITHDRAWAL,
-        },
-      },
-      {
-        $group: {
-          _id: {
-            $month: '$createdAt',
+  monthName(m: number) {
+    return [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ][m - 1];
+  }
+
+  async getVXChart(userId: string) {
+    return this.transactionModel
+      .aggregate([
+        {
+          $match: {
+            type: { $in: ['referral', 'binary-profit'] },
+            status: 'completed',
           },
-          total: {
-            $sum: '$amount',
+        },
+        {
+          $group: {
+            _id: { $month: '$createdAt' },
+            total: { $sum: '$amount' },
           },
         },
-      },
-      {
-        $sort: {
-          _id: 1,
+        { $sort: { _id: 1 } },
+        {
+          $project: {
+            _id: 0,
+            month: '$_id',
+            total: 1,
+          },
         },
-      },
-    ]);
+      ])
+      .then((rows) => ({
+        labels: rows.map((r) => this.monthName(r.month)),
+        data: rows.map((r) => r.total),
+      }));
+  }
+
+  async getDepositChart(userId: string) {
+    return this.transactionModel
+      .aggregate([
+        {
+          $match: {
+            type: { $in: ['deposit'] },
+            status: 'completed',
+          },
+        },
+        {
+          $group: {
+            _id: { $month: '$createdAt' },
+            total: { $sum: '$amount' },
+          },
+        },
+        { $sort: { _id: 1 } },
+        {
+          $project: {
+            _id: 0,
+            month: '$_id',
+            total: 1,
+          },
+        },
+      ])
+      .then((rows) => ({
+        labels: rows.map((r) => this.monthName(r.month)),
+        data: rows.map((r) => r.total),
+      }));
+  }
+
+  async getWithdrawChart(userId: string) {
+    return this.transactionModel
+      .aggregate([
+        {
+          $match: {
+            type: { $in: ['withdraw'] },
+            status: 'completed',
+          },
+        },
+        {
+          $group: {
+            _id: { $month: '$createdAt' },
+            total: { $sum: '$amount' },
+          },
+        },
+        { $sort: { _id: 1 } },
+        {
+          $project: {
+            _id: 0,
+            month: '$_id',
+            total: 1,
+          },
+        },
+      ])
+      .then((rows) => ({
+        labels: rows.map((r) => this.monthName(r.month)),
+        data: rows.map((r) => r.total),
+      }));
   }
 }
