@@ -1,134 +1,35 @@
-// src/modules/transactions/schemas/transaction.schema.ts
-
-import {
-  Prop,
-  Schema,
-  SchemaFactory,
-} from '@nestjs/mongoose';
-
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 import * as mongoose from 'mongoose';
 
-export type TransactionDocument =
-  Transaction & Document;
+@Schema({ timestamps: true })
+export class Transaction extends Document {
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
+  userId?: string;
 
-export enum TransactionType {
-  PRODUCT_PURCHASE = 'PRODUCT_PURCHASE',
+  @Prop({ required: true })
+  type?: string; // deposit, withdraw, investment,  profit, binary-profit , bonus
 
-  WITHDRAWAL = 'WITHDRAWAL',
+  @Prop({ required: true })
+  amount?: number; // مبلغ تراکنش
 
-  REFERRAL_BONUS = 'REFERRAL_BONUS',
+  @Prop({ default: 'pending' })
+  status?: string; // pending, completed, failed
 
-  PAIR_BONUS = 'PAIR_BONUS',
+  @Prop({ default: 'USD' })
+  currency?: string; // واحد پول (TRX, USD)
 
-  RANK_BONUS = 'RANK_BONUS',
+  @Prop({ default: null })
+  paymentId?: string; // شناسه پرداخت NOWPayments
 
-  WEEKLY_BONUS = 'WEEKLY_BONUS',
+  @Prop({ default: null })
+  statusUrl?: string; // لینک وضعیت پرداخت (invoice URL)
 
-  MANUAL_BONUS = 'MANUAL_BONUS',
+  @Prop({ default: null })
+  note?: string; // توضیحات اضافی
 
-  ADJUSTMENT = 'ADJUSTMENT',
+  @Prop({ default: null })
+  txHash?: string; // هش تراکنش (اگر بلاک‌چینی باشد)
 }
 
-export enum TransactionStatus {
-  PENDING = 'PENDING',
-
-  APPROVED = 'APPROVED',
-
-  REJECTED = 'REJECTED',
-
-  COMPLETED = 'COMPLETED',
-}
-
-@Schema({
-  timestamps: true,
-})
-export class Transaction {
-  @Prop({
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-    index: true,
-  })
-  userId!: mongoose.Types.ObjectId;
-
-  @Prop({
-    enum: TransactionType,
-    required: true,
-    index: true,
-  })
-  type!: TransactionType;
-
-  @Prop({
-    required: true,
-    min: 0,
-  })
-  amount!: number;
-
-  @Prop({
-    enum: TransactionStatus,
-    default: TransactionStatus.PENDING,
-  })
-  status!: TransactionStatus;
-
-  @Prop({
-    default: 'IRR',
-  })
-  currency!: string;
-
-  // شناسه سفارش
-  @Prop({
-    default: null,
-  })
-  orderId?: string;
-
-  // کاربر مرتبط با پورسانت
-  @Prop({
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    default: null,
-  })
-  relatedUserId?: mongoose.Types.ObjectId;
-
-  // تعداد زوج محاسبه شده
-  @Prop({
-    default: 0,
-  })
-  pairCycle?: number;
-
-  // حجم سمت چپ
-  @Prop({
-    default: 0,
-  })
-  leftVolume?: number;
-
-  // حجم سمت راست
-  @Prop({
-    default: 0,
-  })
-  rightVolume?: number;
-
-  // توضیحات
-  @Prop({
-    default: '',
-  })
-  note?: string;
-
-  // ادمین تایید کننده
-  @Prop({
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    default: null,
-  })
-  approvedBy?: mongoose.Types.ObjectId;
-
-  @Prop({
-    default: null,
-  })
-  approvedAt?: Date;
-}
-
-export const TransactionSchema =
-  SchemaFactory.createForClass(
-    Transaction,
-  );
+export const TransactionSchema = SchemaFactory.createForClass(Transaction);
