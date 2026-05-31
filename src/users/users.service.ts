@@ -10,7 +10,7 @@ import { Model } from 'mongoose';
 
 import * as bcrypt from 'bcrypt';
 
-import { User, UserLevel } from './schemas/user.schema';
+import { User, UserDocument, UserLevel } from './schemas/user.schema';
 
 type BalanceField =
   | 'mainBalance'
@@ -25,52 +25,14 @@ type BalanceField =
 export class UsersService {
   constructor(
     @InjectModel(User.name)
-    private readonly userModel: Model<User>,
+    private readonly userModel: Model<UserDocument>,
   ) {}
 
   // =========================
   // CREATE
   // =========================
-
-  async create(data: Partial<User>): Promise<User> {
-    const user = new this.userModel({
-      ...data,
-
-      active: true,
-
-      authentication: false,
-
-      level: 'STARTER',
-
-      reward: 0,
-
-      leftHand: 0,
-
-      rightHand: 0,
-
-      teamOrders: 0,
-
-      orders: 0,
-
-      pairCycle: 0,
-
-      mainBalance: 0,
-
-      maxCapBalance: 0,
-
-      maxCapBalanceWeek: 0,
-
-      withdrawalTotalBalance: 0,
-
-      referralBalance: 0,
-
-      bonusBalance: 0,
-
-      totalIncome: 0,
-
-      totalBalance: 0,
-    });
-
+ async create(data: Partial<User>): Promise<UserDocument> {
+    const user = new this.userModel(data);
     return user.save();
   }
 
@@ -78,19 +40,19 @@ export class UsersService {
   // FIND
   // =========================
 
-  async findById(id: string): Promise<User | null> {
+  async findById(id: string): Promise<UserDocument | null> {
     return this.userModel.findById(id).exec();
   }
 
-  async findByPhone(phone: string): Promise<User | null> {
+  async findByPhone(phone: string): Promise<UserDocument | null> {
     return this.userModel.findOne({ phone }).exec();
   }
 
-  async findByReferralCode(referralCode: string): Promise<User | null> {
+  async findByReferralCode(referralCode: string): Promise<UserDocument | null> {
     return this.userModel.findOne({ referralCode }).exec();
   }
 
-  async findAll(): Promise<User[]> {
+  async findAll(): Promise<UserDocument[]> {
     return this.userModel.find().select('-password').exec();
   }
 
@@ -98,7 +60,7 @@ export class UsersService {
   // UPDATE USER
   // =========================
 
-  async updateUser(userId: string, data: Partial<User>): Promise<User> {
+  async updateUser(userId: string, data: Partial<User>): Promise<UserDocument> {
     const user = await this.userModel.findById(userId);
 
     if (!user) {
@@ -210,83 +172,14 @@ export class UsersService {
     return user;
   }
 
-  async addBonusBalance(userId: string, amount: number) {
-    const user = await this.userModel.findById(userId);
-
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    user.bonusBalance += amount;
-
-    user.totalIncome += amount;
-
-    user.totalBalance += amount;
-
-    await user.save();
-
-    return user;
-  }
 
   // =========================
   // MLM DATA
   // =========================
 
-  async increaseLeftHand(userId: string, volume: number) {
-    const user = await this.userModel.findById(userId);
 
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
 
-    user.leftHand += volume;
 
-    await user.save();
-
-    return user;
-  }
-
-  async increaseRightHand(userId: string, volume: number) {
-    const user = await this.userModel.findById(userId);
-
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    user.rightHand += volume;
-
-    await user.save();
-
-    return user;
-  }
-
-  async increaseTeamOrders(userId: string, amount: number) {
-    const user = await this.userModel.findById(userId);
-
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    user.teamOrders += amount;
-
-    await user.save();
-
-    return user;
-  }
-
-  async increasePairCycle(userId: string) {
-    const user = await this.userModel.findById(userId);
-
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    user.pairCycle += 1;
-
-    await user.save();
-
-    return user;
-  }
 
   // =========================
   // USER LEVEL

@@ -132,10 +132,7 @@ export class User {
   })
   level!: UserLevel;
 
-  @Prop({
-    default: 0,
-  })
-  reward!: number;
+
 
   // ===== Wallet =====
 
