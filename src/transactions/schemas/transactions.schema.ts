@@ -8,7 +8,7 @@ export class Transaction extends Document {
   userId?: string;
 
   @Prop({ required: true })
-  type?: string; // deposit, withdraw, investment,  profit, binary-profit , bonus
+  type?: string; // deposit, withdraw, investment, buy-product , binary-profit , bonus
 
   @Prop({ required: true })
   amount?: number; // مبلغ تراکنش
@@ -16,7 +16,7 @@ export class Transaction extends Document {
   @Prop({ default: 'pending' })
   status?: string; // pending, completed, failed
 
-  @Prop({ default: 'USD' })
+  @Prop({ default: 'TOMAN' })
   currency?: string; // واحد پول (TRX, USD)
 
   @Prop({ default: null })
