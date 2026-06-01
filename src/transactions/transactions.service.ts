@@ -48,16 +48,6 @@ export class TransactionsService {
     return await newTx.save();
   }
 
-  // 🔹 دریافت سرمایه‌گذاری‌های کاربر
-  async getUserInvestments(userId: string) {
-    return await this.transactionModel
-      .find({
-        userId,
-        type: 'investment',
-      })
-      .sort({ createdAt: -1 })
-      .lean();
-  }
 
   // 🔹 آپدیت وضعیت تراکنش بر اساس paymentId
   async updateTransactionStatus(
@@ -174,12 +164,12 @@ export class TransactionsService {
     );
   }
 
-  async getProfitChart(userId: string) {
+  async getBuyProductChart(userId: string) {
     return this.transactionModel
       .aggregate([
         {
           $match: {
-            type: 'profit',
+            type: 'buy-product',
             status: 'completed',
           },
         },
