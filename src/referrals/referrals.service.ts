@@ -95,7 +95,7 @@ export class ReferralsService {
 
     return {
       success: true,
-      message: `Successfully placed on ${position} side of ${parent.firstName}.`,
+      message: `Successfully placed on ${position} side of ${parent.name}.`,
       data: {
         parentId: parent._id,
         position,
@@ -104,38 +104,6 @@ export class ReferralsService {
   }
 
 
-  async validateReferral(referrerCode: string) {
-  const parent = await this.usersService.findByReferralCode(referrerCode);
-
-  if (!parent) {
-    return {
-      success: false,
-      message: 'Invalid referral code.',
-    };
-  }
-
-  const leftExists = await this.referralModel.exists({
-    parent: parent._id,
-    position: 'left',
-  });
-
-  const rightExists = await this.referralModel.exists({
-    parent: parent._id,
-    position: 'right',
-  });
-
-  if (leftExists && rightExists) {
-    return {
-      success: false,
-      message: 'Both left and right positions are already occupied.',
-    };
-  }
-
-  return {
-    success: true,
-    parent,
-  };
-}
 
 
 
