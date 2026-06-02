@@ -259,8 +259,8 @@ export class ReferralsService {
 
       return {
         id: user._id.toString(),
-        name: `${user.firstName} ${user.lastName}`,
-        email: user.email,
+        name: `${user.name} ${user.family}`,
+        phone: user.phone,
         vxCode: user.activeVxCode ? user.vxCode : null,
 
         balances: {
