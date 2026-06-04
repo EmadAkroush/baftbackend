@@ -229,11 +229,11 @@ export class ReferralsService {
         id: user._id.toString(),
         name: `${user.name} ${user.family}`,
         phone: user.phone,
-        vxCode: user.activeVxCode ? user.vxCode : null,
+        vxCode: user.referralCode,
 
         balances: {
           main: user.mainBalance,
-          profit: user.profitBalance,
+          maxCapBalance: user.maxCapBalance,
           referral: user.referralBalance,
         },
 

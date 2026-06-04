@@ -14,7 +14,7 @@ export class Referral extends Document {
     required: true,
     index: true,
   })
-  parent?: Types.ObjectId;
+  parent: Types.ObjectId;
 
   /**
    * 👤 Child user
@@ -27,7 +27,7 @@ export class Referral extends Document {
     unique: true,
     index: true,
   })
-  referredUser?: Types.ObjectId;
+  referredUser: Types.ObjectId;
 
   /**
    * 📍 Position in binary tree
@@ -39,13 +39,13 @@ export class Referral extends Document {
     required: true,
     index: true,
   })
-  position?: 'left' | 'right';
+  position: 'left' | 'right';
 
   /**
    * 💰 Binary profit (optional / future use)
    */
   @Prop({ type: Number, default: 0 })
-  profitEarned?: number;
+  profitEarned: number;
 }
 
 export const ReferralSchema = SchemaFactory.createForClass(Referral);
