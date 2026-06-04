@@ -1,4 +1,90 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+
+import { Product } from './schemas/product.schema';
 
 @Injectable()
-export class ProductsService {}
+export class ProductsService {
+  constructor(
+    @InjectModel(Product.name)
+    private productModel: Model<Product>,
+  ) {}
+
+  async create(data: Partial<Product>) {
+    const product = new this.productModel(data);
+    return product.save();
+  }
+
+  async findAll() {
+    return this.productModel
+      .find()
+      .sort({ createdAt: -1 });
+  }
+
+  async findOne(id: string) {
+    const product =
+      await this.productModel.findById(id);
+
+    if (!product) {
+      throw new NotFoundException(
+        'Product not found',
+      );
+    }
+
+    return product;
+  }
+
+  async update(
+    id: string,
+    data: Partial<Product>,
+  ) {
+    const product =
+      await this.productModel.findByIdAndUpdate(
+        id,
+        data,
+        { new: true },
+      );
+
+    if (!product) {
+      throw new NotFoundException(
+        'Product not found',
+      );
+    }
+
+    return product;
+  }
+
+  async remove(id: string) {
+    const product =
+      await this.productModel.findByIdAndDelete(id);
+
+    if (!product) {
+      throw new NotFoundException(
+        'Product not found',
+      );
+    }
+
+    return {
+      message: 'Product deleted successfully',
+    };
+  }
+
+  async findByCategory(category: string) {
+    return this.productModel.find({
+      category,
+      active: true,
+    });
+  }
+
+  async getFeaturedProducts() {
+    return this.productModel.find({
+      featured: true,
+      active: true,
+    });
+  }
+}
