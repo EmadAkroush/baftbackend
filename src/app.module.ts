@@ -11,9 +11,10 @@ import { TransactionsModule } from './transactions/transactions.module';
 import { BonusesModule } from './bonuses/bonuses.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ReferralsModule } from './referrals/referrals.module';
+import { OrdersModule } from './orders/orders.module';
 
 @Module({
-  imports: [AuthModule, UsersModule,  MongooseModule.forRoot('mongodb://localhost:27017/baft'), ReferralProfitsModule, ProductsModule, TicketsModule, AdminModule, TransactionsModule, BonusesModule, ReferralsModule],
+  imports: [AuthModule, UsersModule,  MongooseModule.forRoot('mongodb://localhost:27017/baft'), ReferralProfitsModule, ProductsModule, TicketsModule, AdminModule, TransactionsModule, BonusesModule, ReferralsModule, OrdersModule],
   controllers: [AppController],
   providers: [AppService],
 })
