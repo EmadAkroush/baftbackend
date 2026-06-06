@@ -7,7 +7,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import * as mongoose from 'mongoose';
 import { TransactionsService } from '../transactions/transactions.service'; // ✅ اضافه شد
 import { User } from '../users/schemas/user.schema';
-import { InvestmentsService } from 'src/investments/investments.service';
+import { OrdersService } from 'src/orders/orders.service';
 
 @Injectable()
 export class ReferralsService {
@@ -18,7 +18,7 @@ export class ReferralsService {
     @InjectModel(User.name) private readonly userModel: Model<User>, // ✅ اضافه کن
     private readonly usersService: UsersService,
     private readonly transactionsService: TransactionsService, // ✅ اضافه شد
-    private readonly investmentsService: InvestmentsService,
+    private readonly ordersService: OrdersService,
   ) {}
 
   // 📥 ثبت زیرمجموعه جدید (در ثبت‌نام یا پروفایل)
@@ -122,7 +122,7 @@ export class ReferralsService {
       let total = 0;
 
       const investments =
-        await this.investmentsService.getUserInvestments(userId);
+        await this.ordersService.findUserOrders(userId);
 
       const activeSum = (investments || [])
         .filter((i: any) => i.status === 'active')
