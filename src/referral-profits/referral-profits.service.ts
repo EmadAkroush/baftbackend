@@ -132,7 +132,7 @@ export class ReferralProfitsService {
         // ⬅️ ثبت حجم مصرف‌شده
         parentUser.binaryMatched.left += usedVolume;
         parentUser.binaryMatched.right += usedVolume;
-        parentUser.vxCycle += pairs;
+        parentUser.pairCycle += pairs;
         await parentUser.save();
 
         await this.usersService.addBalance(

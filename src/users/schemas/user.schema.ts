@@ -102,12 +102,12 @@ export class User {
   @Prop({
     default: 0,
   })
-  leftHand!: number;
+  leftVolume!: number;
 
   @Prop({
     default: 0,
   })
-  rightHand!: number;
+  rightVolume!: number;
 
   @Prop({
     default: 0,
@@ -118,6 +118,18 @@ export class User {
     default: 0,
   })
   orders!: number;
+
+  @Prop({
+    type: {
+      left: { type: Number, default: 0 },
+      right: { type: Number, default: 0 },
+    },
+    default: { left: 0, right: 0 },
+  })
+  binaryMatched!: {
+    left: number;
+    right: number;
+  };
 
   @Prop({
     default: 0,
@@ -131,8 +143,6 @@ export class User {
     default: UserLevel.STARTER,
   })
   level!: UserLevel;
-
-
 
   // ===== Wallet =====
 
