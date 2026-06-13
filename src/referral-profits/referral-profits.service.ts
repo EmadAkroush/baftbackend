@@ -125,56 +125,126 @@ export class ReferralProfitsService {
         rightVolume - parentUser.binaryMatched.right,
       );
 
-      // 💰 محاسبه سود باینری (اصلاح‌شده)
-      const pairable = Math.min(availableLeft, availableRight);
-      const pairs = Math.floor(pairable / 200);
-      const reward = pairs * 35;
+   // ============================
+// LEVEL CONFIG
+// ============================
 
-      if (reward > 0) {
-        const usedVolume = pairs * 200;
+let requiredVolume = 3000000;
+let profitPercent = 20;
+let weeklyCap = 25000000;
 
-        // ⬅️ ثبت حجم مصرف‌شده
-        parentUser.binaryMatched.left += usedVolume;
-        parentUser.binaryMatched.right += usedVolume;
-        parentUser.pairCycle += pairs;
-        await parentUser.save();
+switch (parentUser.level) {
+  case 'PROFESSIONAL':
+    requiredVolume = 9000000;
+    profitPercent = 19;
+    weeklyCap = 40000000;
+    break;
 
-        await this.usersService.addBalance(
-          parentId.toString(),
-          'referralBalance',
-          reward,
-        );
+  case 'LEADER':
+    requiredVolume = 15000000;
+    profitPercent = 18;
+    weeklyCap = 75000000;
+    break;
 
-        await this.usersService.addBalance(
-          parentId.toString(),
-          'totalIncome',
-          reward,
-        );
+  case 'STARTER':
+  default:
+    requiredVolume = 3000000;
+    profitPercent = 20;
+    weeklyCap = 25000000;
+    break;
+}
 
-        await this.usersService.addBalance(
-          parentId.toString(),
-          'totalBalance',
-          reward,
-        );
+// ضعیف ترین لاین
+const weakLegVolume = Math.min(
+  availableLeft,
+  availableRight,
+);
 
-        await this.transactionsService.createTransaction({
-          userId: parentId.toString(),
-          type: 'binary-profit',
-          amount: reward,
-          currency: 'USD',
-          status: 'completed',
-          note: `Binary profit | Level ${level} | Pairs=${pairs} | pairCycle=${parentUser.pairCycle} | Used=${usedVolume} | Left=${leftVolume} | Right=${rightVolume}`,
-        });
-      } else {
-        await this.transactionsService.createTransaction({
-          userId: parentId.toString(),
-          type: 'binary-profit-skip',
-          amount: 0,
-          currency: 'USD',
-          status: 'skipped',
-          note: `Binary not balanced | Level ${level} | Left=${leftVolume} | Right=${rightVolume}`,
-        });
-      }
+// آیا شرایط دریافت پورسانت را دارد؟
+const eligibleForCommission =
+  availableLeft >= requiredVolume &&
+  availableRight >= requiredVolume;
+
+let reward = 0;
+let usedVolume = 0;
+
+if (eligibleForCommission) {
+  reward = Math.floor(
+    (weakLegVolume * profitPercent) / 100,
+  );
+
+  // سقف درآمد هفتگی
+  const currentWeekIncome =
+    parentUser.maxEarningInWeek || 0;
+
+  const remainingCap =
+    weeklyCap - currentWeekIncome;
+
+  reward = Math.min(
+    reward,
+    Math.max(0, remainingCap),
+  );
+
+  usedVolume = weakLegVolume;
+}
+
+if (reward > 0) {
+  parentUser.binaryMatched.left += usedVolume;
+  parentUser.binaryMatched.right += usedVolume;
+
+  parentUser.pairCycle += 1;
+
+  parentUser.referralBalance += reward;
+
+  parentUser.maxEarningInWeek =
+    (parentUser.maxEarningInWeek || 0) + reward;
+
+  // ==========================
+  // LEVEL UPGRADE
+  // ==========================
+
+  if (
+    parentUser.referralBalance >= 300000000
+  ) {
+    parentUser.level = 'LEADER' as any;
+  } else if (
+    parentUser.referralBalance >= 100000000
+  ) {
+    parentUser.level = 'PROFESSIONAL' as any;
+  } else {
+    parentUser.level = 'STARTER' as any;
+  }
+
+  await parentUser.save();
+
+  await this.usersService.addBalance(
+    parentId.toString(),
+    'totalIncome',
+    reward,
+  );
+
+  await this.usersService.addBalance(
+    parentId.toString(),
+    'totalBalance',
+    reward,
+  );
+
+  await this.transactionsService.createTransaction({
+    userId: parentId.toString(),
+    type: 'binary-profit',
+    amount: reward,
+    status: 'completed',
+    note: `
+      Binary Profit
+      Level=${parentUser.level}
+      Percent=${profitPercent}
+      Left=${availableLeft}
+      Right=${availableRight}
+      WeakLeg=${weakLegVolume}
+      Reward=${reward}
+    `,
+  });
+}
 
       // ⬆️ برو بالا
       currentUserId = parentId;

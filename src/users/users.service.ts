@@ -14,7 +14,7 @@ import { User, UserDocument, UserLevel } from './schemas/user.schema';
 
 type BalanceField =
   | 'mainBalance'
-  | 'maxCapBalance'
+  | 'maxEarningInWeek'
   | 'withdrawalTotalBalance'
   | 'referralBalance'
   | 'bonusBalance'

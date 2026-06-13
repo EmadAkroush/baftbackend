@@ -139,10 +139,11 @@ export class User {
   // ===== Level =====
 
   @Prop({
+    type: String,
     enum: UserLevel,
     default: UserLevel.STARTER,
   })
-  level!: UserLevel;
+  level: UserLevel;
 
   // ===== Wallet =====
 
@@ -159,7 +160,7 @@ export class User {
   @Prop({
     default: 0,
   })
-  maxCapBalanceWeek!: number;
+  maxEarningInWeek!: number;
 
   @Prop({
     default: 0,
