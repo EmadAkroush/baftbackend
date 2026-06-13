@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Referral } from '../referrals/schemas/referrals.schema';
-import { Investment } from '../investments/schemas/investments.schema';
+import { Order } from '../orders/schemas/order.schema';
 import { UsersService } from '../users/users.service';
 import { TransactionsService } from '../transactions/transactions.service';
 
@@ -12,8 +12,8 @@ export class ReferralProfitsService {
   constructor(
     @InjectModel(Referral.name)
     private readonly referralModel: Model<Referral>,
-    @InjectModel(Investment.name)
-    private readonly investmentModel: Model<Investment>,
+    @InjectModel(Order.name)
+    private readonly orderModel: Model<Order>,
     private readonly usersService: UsersService,
     private readonly transactionsService: TransactionsService,
   ) {}
@@ -31,17 +31,17 @@ export class ReferralProfitsService {
       let total = 0;
 
       // 🔹 سرمایه‌گذاری فعال خود این کاربر
-      const investments = await this.investmentModel.find({
+      const investments = await this.orderModel.find({
         user: userId,
-        status: 'active',
+        status: 'paid',
       });
 
       const totalActiveInvestment = (investments || [])
-        .filter((i) => i.status === 'active')
-        .reduce((sum, i) => sum + Number(i.amount || 0), 0);
+        .filter((i) => i.status === 'paid')
+        .reduce((sum, i) => sum + Number(i.totalPrice || 0), 0);
 
       total += investments.reduce(
-        (sum, inv) => sum + Number(inv.amount || 0),
+        (sum, inv) => sum + Number(inv.totalPrice || 0),
         0,
       );
 
@@ -107,6 +107,10 @@ export class ReferralProfitsService {
 
       const parentUser = await this.usersService.findById(parentId.toString());
 
+      if (!parentUser) {
+        throw new Error('Parent user not found');
+      }
+
       if (!parentUser.binaryMatched) {
         parentUser.binaryMatched = { left: 0, right: 0 };
       }
@@ -159,7 +163,7 @@ export class ReferralProfitsService {
           amount: reward,
           currency: 'USD',
           status: 'completed',
-          note: `Binary profit | Level ${level} | Pairs=${pairs} | vxCycle=${parentUser.vxCycle} | Used=${usedVolume} | Left=${leftVolume} | Right=${rightVolume}`,
+          note: `Binary profit | Level ${level} | Pairs=${pairs} | pairCycle=${parentUser.pairCycle} | Used=${usedVolume} | Left=${leftVolume} | Right=${rightVolume}`,
         });
       } else {
         await this.transactionsService.createTransaction({
