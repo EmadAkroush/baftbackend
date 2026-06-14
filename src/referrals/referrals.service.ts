@@ -125,7 +125,7 @@ export class ReferralsService {
         await this.ordersService.findUserOrders(userId);
 
       const activeSum = (investments || [])
-        .filter((i: any) => i.status === 'active')
+        .filter((i: any) => i.status === 'paid')
         .reduce((sum: number, i: any) => sum + Number(i.amount || 0), 0);
 
       total += activeSum;
