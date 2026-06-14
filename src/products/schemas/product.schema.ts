@@ -113,6 +113,12 @@ export class Product {
     default: false,
   })
   featured: boolean;
+
+  @Prop({
+    type: String,
+    required: true,
+  })
+  categoryId: string;
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);
