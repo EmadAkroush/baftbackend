@@ -6,7 +6,7 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
-import { Category } from './schemas/category.schema';
+import { Category } from './schemas/categories.schema';
 
 @Injectable()
 export class CategoriesService {

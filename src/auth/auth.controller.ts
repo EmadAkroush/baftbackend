@@ -1,73 +1,34 @@
-import {
-  Controller,
-  Post,
-  Body,
-  Req,
-  UseGuards,
-  Get,
-  Query,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { JwtAuthGuard } from './jwt-auth.guard';
-import { RegisterDto } from './dto/register.dto';
-import { LoginDto } from './dto/login.dto';
-import { ForgotPasswordDto } from './dto/forgot-password.dto';
-import { ResetPasswordDto } from './dto/reset-password.dto';
+import { CreateAuthDto } from './dto/create-auth.dto';
+import { UpdateAuthDto } from './dto/update-auth.dto';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  // 🟢 Register new user
-  @Post('register')
-  async register(@Body() dto: RegisterDto ) {
-    // ارسال توکن reCAPTCHA به سرویس احراز هویت
-    return this.authService.register(dto);
+  @Post()
+  create(@Body() createAuthDto: CreateAuthDto) {
+    return this.authService.create(createAuthDto);
   }
 
-  // 🟡 Verify email via token (from body instead of query)
-  @Post('verifyemail')
-  async verifyEmail(@Body('token') token: string) {
-    return this.authService.verifyEmail(token);
+  @Get()
+  findAll() {
+    return this.authService.findAll();
   }
 
-  // 🟢 Login
-  @Post('login')
-  async login(@Body() dto: LoginDto & { recaptchaToken?: string }) {
-    // ارسال توکن reCAPTCHA به سرویس احراز هویت
-    return this.authService.login(dto.email, dto.password, dto.recaptchaToken);
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.authService.findOne(+id);
   }
 
-  // 🟠 Refresh JWT tokens
-  @Get('refresh')
-  async refresh(@Req() req: Request) {
-    const authHeader =
-      (req.headers['authorization'] || req.headers['Authorization']) as string;
-    return this.authService.refresh(authHeader);
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() updateAuthDto: UpdateAuthDto) {
+    return this.authService.update(+id, updateAuthDto);
   }
 
-  // 🔴 Logout (requires valid JWT)
-  @UseGuards(JwtAuthGuard)
-  @Post('logout')
-  async logout(@Req() req: any) {
-    return this.authService.logout(req.user.sub);
-  }
-
-  // 🔵 Forgot password — send reset email
-  @Post('forgot-password')
-  async forgotPassword(@Body() dto: ForgotPasswordDto) {
-    return this.authService.requestPasswordReset(dto.email);
-  }
-
-  // 🟢 Verify reset token — check token validity before reset
-  @Get('verify-reset')
-  async verifyReset(@Query('token') token: string) {
-    return this.authService.verifyResetToken(token);
-  }
-
-  // 🟣 Reset password — after token verification
-  @Post('reset-password')
-  async resetPassword(@Body() dto: ResetPasswordDto) {
-    return this.authService.resetPassword(dto.token, dto.newPassword);
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.authService.remove(+id);
   }
 }

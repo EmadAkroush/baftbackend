@@ -5,7 +5,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import {
   Category,
   CategorySchema,
-} from './schemas/category.schema';
+} from './schemas/categories.schema';
 
 import { CategoriesController } from './categories.controller';
 import { CategoriesService } from './categories.service';
