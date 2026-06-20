@@ -89,11 +89,6 @@ export class TransactionsController {
     return this.transactionsService.requestWithdrawal(userId, body.amount);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Post('chart/profit')
-  async profitChart(@Body() body: { userId: string }) {
-    return this.transactionsService.getProfitChart(body.userId);
-  }
 
   @UseGuards(JwtAuthGuard)
   @Post('chart/vx')
