@@ -1,13 +1,11 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
-import {
-  Order,
-  OrderSchema,
-} from './schemas/order.schema';
+import { Order, OrderSchema } from './schemas/order.schema';
 
 import { OrdersService } from './orders.service';
 import { OrdersController } from './orders.controller';
+import { Product, ProductSchema } from '../products/schemas/product.schema'
 
 @Module({
   imports: [
@@ -15,6 +13,10 @@ import { OrdersController } from './orders.controller';
       {
         name: Order.name,
         schema: OrderSchema,
+      },
+      {
+        name: Product.name,
+        schema: ProductSchema,
       },
     ]),
   ],
