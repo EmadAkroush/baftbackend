@@ -6,7 +6,7 @@ import { Referral, ReferralSchema } from './schemas/referrals.schema';
 import { UsersModule } from '../users/users.module';
 import { TransactionsModule } from '../transactions/transactions.module'; 
 import { User, UserSchema } from '../users/schemas/user.schema'; // ✅ اضافه کن
-import { InvestmentsModule } from 'src/investments/investments.module';
+import { OrdersModule } from 'src/orders/orders.module';
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Referral.name, schema: ReferralSchema },
@@ -14,7 +14,7 @@ import { InvestmentsModule } from 'src/investments/investments.module';
     ]),
     UsersModule,
     TransactionsModule,
-    InvestmentsModule
+    OrdersModule,
   ],
   providers: [ReferralsService],
   controllers: [ReferralsController],
