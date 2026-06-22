@@ -90,7 +90,7 @@ export class Product {
   @Prop({
     default: null,
   })
-  Code: string;
+  code: string;
 
   // موجودی
   @Prop({
