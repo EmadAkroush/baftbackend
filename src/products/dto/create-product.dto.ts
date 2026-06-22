@@ -49,12 +49,12 @@ export class CreateProductDto {
   material?: string;
 
   @IsOptional()
-  @IsArray()
-  colors?: string[];
+  @IsString()
+  colors?: string;
 
   @IsOptional()
-  @IsArray()
-  sizes?: string[];
+  @IsString()
+  sizes?: string;
 
   @IsOptional()
   @IsArray()

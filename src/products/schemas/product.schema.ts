@@ -53,17 +53,17 @@ export class Product {
 
   // رنگ
   @Prop({
-    type: [String],
-    default: [],
+   
+    default: null,
   })
-  colors: string[];
+  colors: string;
 
   // سایز
   @Prop({
-    type: [String],
-    default: [],
+  
+    default: null,
   })
-  sizes: string[];
+  sizes: string;
 
   // تصاویر
   @Prop({
