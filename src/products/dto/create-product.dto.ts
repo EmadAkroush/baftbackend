@@ -14,6 +14,22 @@ export class CreateProductDto {
   @IsString()
   description?: string;
 
+  @IsOptional()
+  @IsNumber()
+  soldCount?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  active: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  rating: number;
+
+  @IsOptional()
+  @IsString()
+  categoryId: string;
+  
   @IsNumber()
   price: number;
 
