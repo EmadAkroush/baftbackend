@@ -51,16 +51,19 @@ export class Product {
   })
   material: string;
 
+  @Prop({
+    default: null,
+  })
+  brand: string;
+
   // رنگ
   @Prop({
-   
     default: null,
   })
   colors: string;
 
   // سایز
   @Prop({
-  
     default: null,
   })
   sizes: string;
@@ -83,6 +86,11 @@ export class Product {
     default: null,
   })
   trackingCode: string;
+
+  @Prop({
+    default: null,
+  })
+  Code: string;
 
   // موجودی
   @Prop({

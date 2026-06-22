@@ -29,7 +29,7 @@ export class CreateProductDto {
   @IsOptional()
   @IsString()
   categoryId: string;
-  
+
   @IsNumber()
   price: number;
 
@@ -50,6 +50,10 @@ export class CreateProductDto {
 
   @IsOptional()
   @IsString()
+  brand?: string;
+
+  @IsOptional()
+  @IsString()
   colors?: string;
 
   @IsOptional()
@@ -67,6 +71,10 @@ export class CreateProductDto {
   @IsOptional()
   @IsString()
   trackingCode?: string;
+
+  @IsOptional()
+  @IsString()
+  Code?: string;
 
   @IsOptional()
   @IsNumber()
