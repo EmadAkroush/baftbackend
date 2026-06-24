@@ -1,10 +1,8 @@
-import {
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import type { File } from 'multer';
 
 import { Product } from './schemas/product.schema';
 
@@ -15,58 +13,48 @@ export class ProductsService {
     private productModel: Model<Product>,
   ) {}
 
-  async create(data: Partial<Product>) {
-    const product = new this.productModel(data);
+  async create(data: Partial<Product>, files: File[]) {
+    const images = files.map((file) => `/uploads/products/${file.filename}`);
+
+    const product = new this.productModel({
+      ...data,
+      images,
+    });
+
     return product.save();
   }
 
   async findAll() {
-    return this.productModel
-      .find()
-      .sort({ createdAt: -1 });
+    return this.productModel.find().sort({ createdAt: -1 });
   }
 
   async findOne(id: string) {
-    const product =
-      await this.productModel.findById(id);
+    const product = await this.productModel.findById(id);
 
     if (!product) {
-      throw new NotFoundException(
-        'Product not found',
-      );
+      throw new NotFoundException('Product not found');
     }
 
     return product;
   }
 
-  async update(
-    id: string,
-    data: Partial<Product>,
-  ) {
-    const product =
-      await this.productModel.findByIdAndUpdate(
-        id,
-        data,
-        { new: true },
-      );
+  async update(id: string, data: Partial<Product>) {
+    const product = await this.productModel.findByIdAndUpdate(id, data, {
+      new: true,
+    });
 
     if (!product) {
-      throw new NotFoundException(
-        'Product not found',
-      );
+      throw new NotFoundException('Product not found');
     }
 
     return product;
   }
 
   async remove(id: string) {
-    const product =
-      await this.productModel.findByIdAndDelete(id);
+    const product = await this.productModel.findByIdAndDelete(id);
 
     if (!product) {
-      throw new NotFoundException(
-        'Product not found',
-      );
+      throw new NotFoundException('Product not found');
     }
 
     return {

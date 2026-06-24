@@ -6,6 +6,8 @@ import {
   IsString,
 } from 'class-validator';
 
+import { Type, Transform } from 'class-transformer';
+
 export class CreateProductDto {
   @IsString()
   title: string;
@@ -15,25 +17,30 @@ export class CreateProductDto {
   description?: string;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   soldCount?: number;
 
   @IsOptional()
+  @Transform(({ value }) => value === 'true')
   @IsBoolean()
-  active: boolean;
+  active?: boolean;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
-  rating: number;
+  rating?: number;
 
   @IsOptional()
   @IsString()
-  categoryId: string;
+  categoryId?: string;
 
+  @Type(() => Number)
   @IsNumber()
   price: number;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   discountPrice?: number;
 
@@ -77,10 +84,12 @@ export class CreateProductDto {
   code?: string;
 
   @IsOptional()
+  @Type(() => Number)
   @IsNumber()
   stock?: number;
 
   @IsOptional()
+  @Transform(({ value }) => value === 'true')
   @IsBoolean()
   featured?: boolean;
 }
