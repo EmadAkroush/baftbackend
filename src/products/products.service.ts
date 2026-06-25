@@ -24,8 +24,25 @@ export class ProductsService {
     return product.save();
   }
 
-  async findAll() {
-    return this.productModel.find().sort({ createdAt: -1 });
+  async findAll(page = 1, limit = 9) {
+    const skip = (page - 1) * limit;
+
+    const [products, total] = await Promise.all([
+      this.productModel.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
+
+      this.productModel.countDocuments(),
+    ]);
+
+    return {
+      data: products,
+
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async findOne(id: string) {

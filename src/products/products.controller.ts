@@ -6,8 +6,11 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UploadedFiles,
   UseInterceptors,
+  DefaultValuePipe,
+  ParseIntPipe,
 } from '@nestjs/common';
 
 import { ProductsService } from './products.service';
@@ -51,8 +54,9 @@ export class ProductsController {
   }
 
   @Get()
-  findAll() {
-    return this.productsService.findAll();
+  findAll(@Query('page') page = 1, @Query('limit') limit = 9) {
+      console.log('PAGE =>', page);
+    return this.productsService.findAll(Number(page), Number(limit));
   }
 
   @Get('featured')
