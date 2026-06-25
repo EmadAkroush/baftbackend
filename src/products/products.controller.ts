@@ -71,8 +71,29 @@ export class ProductsController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto) {
-    return this.productsService.update(id, updateProductDto);
+  @UseInterceptors(
+    FilesInterceptor('images', 10, {
+      storage: diskStorage({
+        destination: './uploads/products',
+
+        filename: (req, file, cb) => {
+          const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
+
+          cb(null, unique + extname(file.originalname));
+        },
+      }),
+    }),
+  )
+  update(
+    @Param('id') id: string,
+
+    @UploadedFiles()
+    files: MulterFile[],
+
+    @Body()
+    updateProductDto: UpdateProductDto,
+  ) {
+    return this.productsService.update(id, updateProductDto, files);
   }
 
   @Delete(':id')

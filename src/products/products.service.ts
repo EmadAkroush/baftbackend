@@ -38,16 +38,21 @@ export class ProductsService {
     return product;
   }
 
-  async update(id: string, data: Partial<Product>) {
-    const product = await this.productModel.findByIdAndUpdate(id, data, {
-      new: true,
-    });
+  async update(id: string, data: Partial<Product>, files?: File[]) {
+    const product = await this.productModel.findById(id);
 
     if (!product) {
       throw new NotFoundException('Product not found');
     }
 
-    return product;
+    // اگر عکس جدید ارسال شده
+    if (files && files.length > 0) {
+      data.images = files.map((file) => `/uploads/products/${file.filename}`);
+    }
+
+    Object.assign(product, data);
+
+    return product.save();
   }
 
   async remove(id: string) {
