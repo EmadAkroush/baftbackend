@@ -1,26 +1,133 @@
-import { Injectable } from '@nestjs/common';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
+import {
+  BadRequestException,
+  Injectable,
+} from '@nestjs/common';
+
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+
+import { JwtService } from '@nestjs/jwt';
+
+import { User } from '../users/schemas/user.schema';
+import { Otp } from './schemas/otp.schema';
+
+const MelipayamakApi = require('melipayamak-api');
 
 @Injectable()
 export class AuthService {
-  create(createAuthDto: CreateAuthDto) {
-    return 'This action adds a new auth';
+  constructor(
+    @InjectModel(User.name)
+    private readonly userModel: Model<User>,
+
+    @InjectModel(Otp.name)
+    private readonly otpModel: Model<Otp>,
+
+    private readonly jwtService: JwtService,
+  ) {}
+
+  // ===========================
+  // ارسال کد تایید
+  // ===========================
+
+  async sendOtp(phone: string) {
+    const code = Math.floor(
+      100000 + Math.random() * 900000,
+    ).toString();
+
+    // حذف کدهای قبلی
+    await this.otpModel.deleteMany({
+      phone,
+    });
+
+    await this.otpModel.create({
+      phone,
+      code,
+      expiresAt: new Date(
+        Date.now() + 2 * 60 * 1000,
+      ),
+    });
+
+    const api = new MelipayamakApi(
+      process.env.SMS_USERNAME,
+      process.env.SMS_PASSWORD,
+    );
+
+    const sms = api.sms();
+
+    await sms.send(
+      phone,
+      process.env.SMS_FROM,
+      `کد ورود شما: ${code}`,
+    );
+
+    return {
+      success: true,
+      message: 'کد تایید ارسال شد.',
+    };
   }
 
-  findAll() {
-    return `This action returns all auth`;
+  // ===========================
+  // تایید کد
+  // ===========================
+
+  async verifyOtp(
+    phone: string,
+    code: string,
+  ) {
+    const otp =
+      await this.otpModel.findOne({
+        phone,
+        code,
+      });
+
+    if (!otp) {
+      throw new BadRequestException(
+        'کد وارد شده صحیح نیست.',
+      );
+    }
+
+    if (
+      otp.expiresAt.getTime() <
+      Date.now()
+    ) {
+      throw new BadRequestException(
+        'کد منقضی شده است.',
+      );
+    }
+
+    let user =
+      await this.userModel.findOne({
+        phone,
+      });
+
+    if (!user) {
+      user =
+        await this.userModel.create({
+          phone,
+        });
+    }
+
+    await this.otpModel.deleteMany({
+      phone,
+    });
+
+    const token =
+      this.jwtService.sign({
+        id: user._id,
+        phone: user.phone,
+      });
+
+    return {
+      token,
+      user,
+    };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} auth`;
-  }
+  // ===========================
+  // گرفتن اطلاعات کاربر
+  // ===========================
 
-  update(id: number, updateAuthDto: UpdateAuthDto) {
-    return `This action updates a #${id} auth`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} auth`;
+  async getProfile(id: string) {
+    return this.userModel.findById(id);
   }
 }
