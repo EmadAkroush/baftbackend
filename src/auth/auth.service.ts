@@ -1,7 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-} from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -10,8 +7,9 @@ import { JwtService } from '@nestjs/jwt';
 
 import { User } from '../users/schemas/user.schema';
 import { Otp } from './schemas/otp.schema';
+import axios from 'axios';
 
-const MelipayamakApi = require('melipayamak-api');
+
 
 @Injectable()
 export class AuthService {
@@ -30,9 +28,7 @@ export class AuthService {
   // ===========================
 
   async sendOtp(phone: string) {
-    const code = Math.floor(
-      100000 + Math.random() * 900000,
-    ).toString();
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
 
     // حذف کدهای قبلی
     await this.otpModel.deleteMany({
@@ -42,80 +38,66 @@ export class AuthService {
     await this.otpModel.create({
       phone,
       code,
-      expiresAt: new Date(
-        Date.now() + 2 * 60 * 1000,
-      ),
+      expiresAt: new Date(Date.now() + 2 * 60 * 1000),
     });
 
-    const api = new MelipayamakApi(
-      process.env.SMS_USERNAME,
-      process.env.SMS_PASSWORD,
-    );
+    try {
+      await axios.post('https://rest.payamak-panel.com/api/SendSMS/SendSMS', {
+        username: process.env.SMS_USERNAME,
+        password: process.env.SMS_PASSWORD,
+        to: phone,
+        from: process.env.SMS_FROM,
+        text: `کد ورود شما: ${code}`,
+        isflash: false,
+      });
 
-    const sms = api.sms();
+      return {
+        success: true,
+        message: 'کد تایید ارسال شد.',
+      };
+    } catch (error) {
+      console.log(error);
 
-    await sms.send(
-      phone,
-      process.env.SMS_FROM,
-      `کد ورود شما: ${code}`,
-    );
-
-    return {
-      success: true,
-      message: 'کد تایید ارسال شد.',
-    };
+      throw new BadRequestException('خطا در ارسال پیامک');
+    }
   }
 
   // ===========================
   // تایید کد
   // ===========================
 
-  async verifyOtp(
-    phone: string,
-    code: string,
-  ) {
-    const otp =
-      await this.otpModel.findOne({
-        phone,
-        code,
-      });
+  async verifyOtp(phone: string, code: string) {
+    const otp = await this.otpModel.findOne({
+      phone,
+      code,
+    });
 
     if (!otp) {
-      throw new BadRequestException(
-        'کد وارد شده صحیح نیست.',
-      );
+      throw new BadRequestException('کد وارد شده صحیح نیست.');
     }
 
-    if (
-      otp.expiresAt.getTime() <
-      Date.now()
-    ) {
-      throw new BadRequestException(
-        'کد منقضی شده است.',
-      );
+    if (otp.expiresAt.getTime() < Date.now()) {
+      throw new BadRequestException('کد منقضی شده است.');
     }
 
-    let user =
-      await this.userModel.findOne({
-        phone,
-      });
+    let user = await this.userModel.findOne({
+      phone,
+    });
 
     if (!user) {
-      user =
-        await this.userModel.create({
-          phone,
-        });
+      user = await this.userModel.create({
+        phone,
+      });
     }
 
     await this.otpModel.deleteMany({
       phone,
     });
 
-    const token =
-      this.jwtService.sign({
-        id: user._id,
-        phone: user.phone,
-      });
+    const token = this.jwtService.sign({
+      id: user._id,
+      phone: user.phone,
+    });
 
     return {
       token,
