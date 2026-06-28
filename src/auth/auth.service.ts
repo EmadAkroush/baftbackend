@@ -9,8 +9,6 @@ import { User } from '../users/schemas/user.schema';
 import { Otp } from './schemas/otp.schema';
 import axios from 'axios';
 
-
-
 @Injectable()
 export class AuthService {
   constructor(
@@ -80,28 +78,44 @@ export class AuthService {
       throw new BadRequestException('کد منقضی شده است.');
     }
 
+    // پیدا کردن کاربر
     let user = await this.userModel.findOne({
       phone,
     });
 
+    // آیا کاربر جدید است؟
+    let isNewUser = false;
+
     if (!user) {
+      isNewUser = true;
+
       user = await this.userModel.create({
         phone,
       });
     }
 
+    // حذف OTP های استفاده شده
     await this.otpModel.deleteMany({
       phone,
     });
 
+    // ساخت توکن
     const token = this.jwtService.sign({
       id: user._id,
       phone: user.phone,
     });
 
     return {
+      success: true,
+      message: 'ورود با موفقیت انجام شد.',
       token,
-      user,
+      isNewUser,
+      user: {
+        id: user._id,
+        phone: user.phone,
+        name: user.name || null,
+        family: user.family || null,
+      },
     };
   }
 
