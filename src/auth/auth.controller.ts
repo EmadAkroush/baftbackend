@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Body,
+   Req,
   Patch,
   Param,
   Delete,
@@ -10,10 +11,18 @@ import {
 import { AuthService } from './auth.service';
 import { SendOtpDto } from './dto/send-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+  // 🟠 Refresh JWT tokens
+  @Get('refresh')
+  async refresh(@Req() req: Request) {
+    const authHeader = (req.headers['authorization'] ||
+      req.headers['Authorization']) as string;
+    return this.authService.refreshToken(authHeader);
+  }
   @Post('send-otp')
   sendOtp(@Body() body: { phone: string }) {
     return this.authService.sendOtp(body.phone);
@@ -28,5 +37,4 @@ export class AuthController {
   ) {
     return this.authService.verifyOtp(body.phone, body.code);
   }
-  
 }

@@ -29,9 +29,9 @@ import {
     ]),
 
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'JWT_SECRET',
+      secret: process.env.JWT_ACCESS_SECRET || 'JWT_SECRET',
       signOptions: {
-        expiresIn: '30d',
+        expiresIn: '15m',
       },
     }),
   ],

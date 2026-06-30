@@ -21,10 +21,10 @@ export enum UserRole {
 export class User {
   // ===== Profile =====
 
-  @Prop({ required: true })
+  @Prop()
   name!: string;
 
-  @Prop({ required: true })
+  @Prop()
   family!: string;
 
   @Prop({
@@ -82,7 +82,7 @@ export class User {
   // ===== Referral =====
 
   @Prop({
-    required: true,
+  
     unique: true,
     index: true,
   })
