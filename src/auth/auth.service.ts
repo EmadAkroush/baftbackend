@@ -180,6 +180,7 @@ export class AuthService {
         name: user.name,
         family: user.family,
         referralCode: user.referralCode,
+        role: user.role
       },
     };
   }
