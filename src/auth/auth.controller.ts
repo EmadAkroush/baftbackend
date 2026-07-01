@@ -3,7 +3,7 @@ import {
   Get,
   Post,
   Body,
-   Req,
+  Req,
   Patch,
   Param,
   Delete,
@@ -23,6 +23,16 @@ export class AuthController {
       req.headers['Authorization']) as string;
     return this.authService.refreshToken(authHeader);
   }
+
+    // 🔴 Logout (requires valid JWT)
+
+  @Post('logout')
+  async logout(@Req() req: any) {
+    return this.authService.logout(req.user);
+  }
+
+ 
+
   @Post('send-otp')
   sendOtp(@Body() body: { phone: string }) {
     return this.authService.sendOtp(body.phone);

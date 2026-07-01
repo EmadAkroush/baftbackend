@@ -118,6 +118,12 @@ export class AuthService {
     }
   }
 
+    // === Logout ===
+  async logout(userId: string) {
+    await this.userModel.findByIdAndUpdate(userId, { refreshToken: null });
+    return { message: 'Logged out successfully' };
+  }
+
   // ===========================
   // تایید کد
   // ===========================
